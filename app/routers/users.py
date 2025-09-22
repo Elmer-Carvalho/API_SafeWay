@@ -27,6 +27,12 @@ def list_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
+@router.get("/all", response_model=List[UserSchema])
+def list_all_users(db: Session = Depends(get_db)):
+    """Listar todos os usuários (sem paginação)"""
+    users = db.query(User).all()
+    return users
+
 @router.get("/{user_id}", response_model=UserSchema)
 def get_user(user_id: str, db: Session = Depends(get_db)):
     """Obter usuário por ID"""

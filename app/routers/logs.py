@@ -27,6 +27,23 @@ def list_access_logs(
     logs = query.order_by(AccessLog.timestamp.desc()).offset(skip).limit(limit).all()
     return logs
 
+@router.get("/access/all", response_model=List[AccessLogSchema])
+def list_all_access_logs(
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    db: Session = Depends(get_db)
+):
+    """Listar todos os logs de acesso (sem paginação)"""
+    query = db.query(AccessLog)
+    
+    if start_date:
+        query = query.filter(AccessLog.timestamp >= start_date)
+    if end_date:
+        query = query.filter(AccessLog.timestamp <= end_date)
+    
+    logs = query.order_by(AccessLog.timestamp.desc()).all()
+    return logs
+
 @router.get("/access/{log_id}", response_model=AccessLogSchema)
 def get_access_log(log_id: str, db: Session = Depends(get_db)):
     """Obter log de acesso por ID"""
@@ -67,6 +84,29 @@ def list_error_logs(
         query = query.filter(ErrorLog.timestamp <= end_date)
     
     logs = query.order_by(ErrorLog.timestamp.desc()).offset(skip).limit(limit).all()
+    return logs
+
+@router.get("/errors/all", response_model=List[ErrorLogSchema])
+def list_all_error_logs(
+    severity: Optional[str] = None,
+    component: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    db: Session = Depends(get_db)
+):
+    """Listar todos os logs de erro (sem paginação)"""
+    query = db.query(ErrorLog)
+    
+    if severity:
+        query = query.filter(ErrorLog.severity == severity)
+    if component:
+        query = query.filter(ErrorLog.component == component)
+    if start_date:
+        query = query.filter(ErrorLog.timestamp >= start_date)
+    if end_date:
+        query = query.filter(ErrorLog.timestamp <= end_date)
+    
+    logs = query.order_by(ErrorLog.timestamp.desc()).all()
     return logs
 
 @router.get("/errors/{log_id}", response_model=ErrorLogSchema)

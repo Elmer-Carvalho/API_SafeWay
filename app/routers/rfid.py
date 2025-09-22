@@ -33,6 +33,12 @@ def list_rfid_credentials(skip: int = 0, limit: int = 100, db: Session = Depends
     credentials = db.query(RFIDCredential).offset(skip).limit(limit).all()
     return credentials
 
+@router.get("/credentials/all", response_model=List[RFIDCredentialSchema])
+def list_all_rfid_credentials(db: Session = Depends(get_db)):
+    """Listar todas as credenciais RFID (sem paginação)"""
+    credentials = db.query(RFIDCredential).all()
+    return credentials
+
 @router.get("/credentials/{credential_id}", response_model=RFIDCredentialSchema)
 def get_rfid_credential(credential_id: str, db: Session = Depends(get_db)):
     """Obter credencial RFID por ID"""

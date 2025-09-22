@@ -72,20 +72,30 @@ docker-compose down -v        # Limpar containers e volumes
 
 ### Usuários
 - `POST /api/v1/users/` - Criar usuário
-- `GET /api/v1/users/` - Listar usuários
-- `GET /api/v1/users/{id}` - Obter usuário
+- `GET /api/v1/users/` - Listar usuários (paginado)
+- `GET /api/v1/users/all` - Listar todos os usuários
+- `GET /api/v1/users/{id}` - Obter usuário por ID
 - `PUT /api/v1/users/{id}` - Atualizar usuário
 - `DELETE /api/v1/users/{id}` - Desativar usuário
 
 ### RFID
 - `POST /api/v1/rfid/credentials` - Criar credencial RFID
-- `GET /api/v1/rfid/credentials` - Listar credenciais
+- `GET /api/v1/rfid/credentials` - Listar credenciais (paginado)
+- `GET /api/v1/rfid/credentials/all` - Listar todas as credenciais
+- `GET /api/v1/rfid/credentials/{id}` - Obter credencial por ID
+- `PUT /api/v1/rfid/credentials/{id}` - Atualizar credencial
 - `POST /api/v1/rfid/validate-access` - Validar acesso (sistema local)
 
-### Logs
-- `GET /api/v1/logs/access` - Listar logs de acesso
+### Logs de Acesso
+- `GET /api/v1/logs/access` - Listar logs de acesso (paginado)
+- `GET /api/v1/logs/access/all` - Listar todos os logs de acesso
+- `GET /api/v1/logs/access/{id}` - Obter log de acesso por ID
+
+### Logs de Erro
 - `POST /api/v1/logs/errors` - Criar log de erro
-- `GET /api/v1/logs/errors` - Listar logs de erro
+- `GET /api/v1/logs/errors` - Listar logs de erro (paginado)
+- `GET /api/v1/logs/errors/all` - Listar todos os logs de erro
+- `GET /api/v1/logs/errors/{id}` - Obter log de erro por ID
 
 ## Documentação
 
