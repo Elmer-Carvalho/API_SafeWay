@@ -21,6 +21,20 @@ API para sistema de controle de acesso baseado em RFID, desenvolvida com Python 
 
 ## Instalação
 
+### Opção 1: Docker (Recomendado)
+
+1. Clone o repositório
+2. Execute um único comando:
+   ```bash
+   make up
+   # ou
+   docker-compose up -d
+   ```
+
+A API estará disponível em `http://localhost:8000`
+
+### Opção 2: Instalação Local
+
 1. Clone o repositório
 2. Crie um ambiente virtual:
    ```bash
@@ -35,21 +49,27 @@ API para sistema de controle de acesso baseado em RFID, desenvolvida com Python 
    pip install -r requirements.txt
    ```
 
-4. Configure as variáveis de ambiente:
-   ```bash
-   cp env.example .env
-   # Edite o arquivo .env com suas configurações
-   ```
-
-5. Execute as migrações:
+4. Configure o PostgreSQL e execute as migrações:
    ```bash
    alembic upgrade head
    ```
 
-6. Execute o servidor:
+5. Execute o servidor:
    ```bash
    uvicorn app.main:app --reload
    ```
+
+## Comandos Docker Úteis
+
+```bash
+make help          # Ver todos os comandos disponíveis
+make up            # Iniciar todos os serviços
+make down          # Parar todos os serviços
+make logs          # Ver logs dos serviços
+make shell         # Acessar shell do container
+make db-shell      # Acessar banco de dados
+make clean         # Limpar containers e volumes
+```
 
 ## Endpoints Principais
 
