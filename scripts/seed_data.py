@@ -8,15 +8,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy.orm import Session
-from app.database import SessionLocal, engine
+from app.database import SessionLocal
 from app.models import User, RFIDCredential
-from app.database import Base
 import uuid
-
-def create_tables():
-    """Criar tabelas se não existirem"""
-    Base.metadata.create_all(bind=engine)
 
 def seed_data():
     """Popular dados iniciais"""
@@ -82,5 +76,4 @@ def seed_data():
         db.close()
 
 if __name__ == "__main__":
-    create_tables()
     seed_data()
