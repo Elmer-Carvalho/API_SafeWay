@@ -20,7 +20,7 @@ services:
   app:
     build: .
     environment:
-      DATABASE_URL: postgresql+psycopg://safeway_user:safeway_password@db:5432/safeway_db
+      DATABASE_URL: postgresql://safeway_user:safeway_password@db:5432/safeway_db
       SECRET_KEY: your-secret-key-here
       DEBUG: "True"
     ports:

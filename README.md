@@ -12,7 +12,7 @@ API para sistema de controle de acesso baseado em RFID, desenvolvida com Python 
 
 ## Tecnologias
 
-- Python 3.13+
+- Python 3.11+
 - FastAPI
 - SQLAlchemy
 - PostgreSQL
