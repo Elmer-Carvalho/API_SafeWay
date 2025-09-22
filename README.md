@@ -26,8 +26,6 @@ API para sistema de controle de acesso baseado em RFID, desenvolvida com Python 
 1. Clone o repositório
 2. Execute um único comando:
    ```bash
-   make up
-   # ou
    docker-compose up -d
    ```
 
@@ -62,13 +60,12 @@ A API estará disponível em `http://localhost:8000`
 ## Comandos Docker Úteis
 
 ```bash
-make help          # Ver todos os comandos disponíveis
-make up            # Iniciar todos os serviços
-make down          # Parar todos os serviços
-make logs          # Ver logs dos serviços
-make shell         # Acessar shell do container
-make db-shell      # Acessar banco de dados
-make clean         # Limpar containers e volumes
+docker-compose up -d          # Iniciar todos os serviços
+docker-compose down           # Parar todos os serviços
+docker-compose logs -f        # Ver logs dos serviços
+docker-compose exec app bash  # Acessar shell do container
+docker-compose exec db psql -U safeway_user -d safeway_db  # Acessar banco
+docker-compose down -v        # Limpar containers e volumes
 ```
 
 ## Endpoints Principais
