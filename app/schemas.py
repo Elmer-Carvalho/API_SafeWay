@@ -83,6 +83,20 @@ class ErrorLog(ErrorLogBase):
     class Config:
         from_attributes = True
 
+# Schemas para HTTP Log
+class HttpLogBase(BaseModel):
+    method: str
+    endpoint: str
+    status_code: int
+    payload: Optional[str] = None
+
+class HttpLog(HttpLogBase):
+    id: uuid.UUID
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
 # Schema para validação de acesso RFID
 class RFIDAccessRequest(BaseModel):
     card_id: str
