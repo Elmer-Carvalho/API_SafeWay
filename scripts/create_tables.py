@@ -8,7 +8,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.database import engine, Base
-from app.models import User, RFIDCredential, AccessLog, ErrorLog
+from app.models import User, RFIDCredential, AccessLog, ErrorLog, HttpLog
 
 def create_tables():
     """Criar todas as tabelas"""

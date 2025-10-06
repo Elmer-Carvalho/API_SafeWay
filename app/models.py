@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Enum
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Enum, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -68,3 +68,14 @@ class ErrorLog(Base):
     description = Column(Text, nullable=False)
     severity = Column(Enum(ErrorSeverity), nullable=False)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+class HttpLog(Base):
+    __tablename__ = "http_logs"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    method = Column(String(10), nullable=False)
+    endpoint = Column(String(255), nullable=False)
+    status_code = Column(Integer, nullable=False)
+    payload = Column(Text, nullable=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+

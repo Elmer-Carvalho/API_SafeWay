@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import users, rfid, logs
+from app.database import SessionLocal
+from app.models import HttpLog
 
 app = FastAPI(
     title="SafeWay API",
@@ -22,6 +24,33 @@ app.add_middleware(
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(rfid.router, prefix="/api/v1/rfid", tags=["rfid"])
 app.include_router(logs.router, prefix="/api/v1/logs", tags=["logs"])
+
+@app.middleware("http")
+async def log_http_requests(request: Request, call_next):
+    db = SessionLocal()
+
+    method = request.method
+    endpoint = str(request.url)
+
+    try:
+        body = await request.body()
+        payload = body.decode("utf-8") if body else None
+    except:
+        payload = None
+
+    response = await call_next(request)
+
+    log = HttpLog(
+        method=method,
+        endpoint=endpoint,
+        status_code=response.status_code,
+        payload=payload
+    )
+    db.add(log)
+    db.commit()
+    db.close()
+
+    return response
 
 @app.get("/")
 async def root():
