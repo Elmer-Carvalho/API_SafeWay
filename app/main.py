@@ -32,12 +32,7 @@ async def log_http_requests(request: Request, call_next):
     method = request.method
     endpoint = str(request.url)
 
-    try:
-        body = await request.body()
-        payload = body.decode("utf-8") if body else None
-    except:
-        payload = None
-
+    payload = f"Payload Logging Disabled for {method}"
     response = await call_next(request)
 
     log = HttpLog(
