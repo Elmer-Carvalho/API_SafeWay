@@ -26,6 +26,10 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    has_time_restriction = Column(Boolean, default=False)
+    time_window_start = Column(String(5), default="00:00") # Formato "HH:MM"
+    time_window_end = Column(String(5), default="23:59")   # Formato "HH:MM"
     
     # Relacionamento com credenciais RFID
     rfid_credentials = relationship("RFIDCredential", back_populates="user")

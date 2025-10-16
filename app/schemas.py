@@ -10,6 +10,10 @@ class UserBase(BaseModel):
     email: EmailStr
     is_active: bool = True
 
+    has_time_restriction: bool = False
+    time_window_start: str = "00:00"
+    time_window_end: str = "23:59"
+
 class UserCreate(UserBase):
     pass
 
@@ -17,6 +21,10 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = None
+
+    has_time_restriction: Optional[bool] = None
+    time_window_start: Optional[str] = None
+    time_window_end: Optional[str] = None
 
 class User(UserBase):
     id: uuid.UUID

@@ -64,31 +64,42 @@ def update_rfid_credential(credential_id: str, credential_update: RFIDCredential
 
 @router.post("/validate-access")
 def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depends(get_db)):
-    """Validar acesso RFID - endpoint para o sistema local"""
-    # Buscar credencial RFID
+    """
+    Validar acesso RFID - endpoint para o sistema local (firmware).
+    Retorna os dados de restrição de horário do usuário.
+    """
+    
+    # 1. Buscar credencial RFID (ativa)
     credential = db.query(RFIDCredential).filter(
         RFIDCredential.card_id == access_request.card_id,
         RFIDCredential.is_active == True
     ).first()
     
     if not credential:
-        # Log de acesso negado - card não encontrado
+        # Log de card não encontrado
         access_log = AccessLog(
-            user_id=None,
+            user_id=None, # Ajuste conforme seu models.py (pode ser NULL)
             rfid_credential_id=None,
             event_type=EventType.CARD_NOT_FOUND,
             location=access_request.location,
             description=f"Card ID {access_request.card_id} não encontrado"
         )
-        db.add(access_log)
-        db.commit()
+        try:
+            db.add(access_log)
+            db.commit()
+        except Exception as e:
+            print(f"Erro ao logar CARD_NOT_FOUND: {e}")
         
+        # Resposta: Acesso negado, com campos de horário em default
         return {
             "access_granted": False,
-            "message": "Credencial não encontrada"
+            "message": "Credencial não encontrada ou inativa",
+            "has_time_restriction": False,
+            "time_window_start": "00:00",
+            "time_window_end": "00:00" # Retorna 00:00-00:00 como default/vazio
         }
     
-    # Verificar se usuário está ativo
+    # 2. Verificar se usuário está ativo
     if not credential.user.is_active:
         # Log de acesso negado - usuário inativo
         access_log = AccessLog(
@@ -101,12 +112,18 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
         db.add(access_log)
         db.commit()
         
+        # Resposta: Acesso negado, mas retorna os dados de horário (para manter estrutura)
         return {
             "access_granted": False,
-            "message": "Usuário inativo"
+            "message": "Usuário inativo no sistema",
+            "has_time_restriction": credential.user.has_time_restriction,
+            "time_window_start": credential.user.time_window_start,
+            "time_window_end": credential.user.time_window_end
         }
     
-    # Acesso concedido
+    # 3. Acesso concedido pelo backend (lógica de horário fica no firmware)
+    
+    # Log de acesso concedido
     access_log = AccessLog(
         user_id=credential.user_id,
         rfid_credential_id=credential.id,
@@ -117,6 +134,7 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
     db.add(access_log)
     db.commit()
     
+    # Retorna o resultado com os campos de restrição de horário
     return {
         "access_granted": True,
         "user": {
@@ -124,5 +142,9 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
             "name": credential.user.full_name,
             "email": credential.user.email
         },
-        "message": "Acesso concedido"
+        "message": "Acesso concedido pelo servidor",
+        # NOVOS CAMPOS ENVIADOS AO FIRMWARE
+        "has_time_restriction": credential.user.has_time_restriction,
+        "time_window_start": credential.user.time_window_start,
+        "time_window_end": credential.user.time_window_end
     }

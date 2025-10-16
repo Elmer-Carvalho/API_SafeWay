@@ -27,10 +27,13 @@ def seed_data():
         
         # Dados de exemplo para usuários
         users_data = [
-            {"full_name": "João Silva", "email": "joao.silva@empresa.com"},
-            {"full_name": "Maria Santos", "email": "maria.santos@empresa.com"},
-            {"full_name": "Pedro Oliveira", "email": "pedro.oliveira@empresa.com"},
-            {"full_name": "Ana Costa", "email": "ana.costa@empresa.com"},
+            {"full_name": "João Silva", "email": "joao.silva@empresa.com", "has_time_restriction": False, "time_window_start": "00:00", "time_window_end": "23:59"},
+            # Restrição 24h explícita (00:00 - 00:00 significa 24h na lógica do firmware)
+            {"full_name": "Maria Santos", "email": "maria.santos@empresa.com", "has_time_restriction": True, "time_window_start": "00:00", "time_window_end": "00:00"}, 
+            # Restrição em horário comercial
+            {"full_name": "Pedro Oliveira", "email": "pedro.oliveira@empresa.com", "has_time_restriction": True, "time_window_start": "08:00", "time_window_end": "18:00"},
+            # Restrição noturna (atravessa meia-noite)
+            {"full_name": "Ana Costa", "email": "ana.costa@empresa.com", "has_time_restriction": True, "time_window_start": "20:00", "time_window_end": "06:00"},
             {"full_name": "Carlos Ferreira", "email": "carlos.ferreira@empresa.com"},
             {"full_name": "Lucia Rodrigues", "email": "lucia.rodrigues@empresa.com"},
             {"full_name": "Roberto Alves", "email": "roberto.alves@empresa.com"},
