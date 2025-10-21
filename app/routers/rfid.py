@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
 from app.models import RFIDCredential, User, AccessLog, EventType
-from app.schemas import RFIDCredentialCreate, RFIDCredentialUpdate, RFIDCredential as RFIDCredentialSchema, RFIDAccessRequest, AccessLog as AccessLogSchema
+from app.schemas import RFIDCredentialCreate, RFIDCredentialUpdate, RFIDCredential as RFIDCredentialSchema, RFIDAccessRequest, AccessLog as AccessLogSchema, RFIDCredentialSync # Adicionar RFIDCredentialSync
 import uuid
 
 router = APIRouter()
@@ -148,3 +148,17 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
         "time_window_start": credential.user.time_window_start,
         "time_window_end": credential.user.time_window_end
     }
+
+@router.get("/credentials/sync", response_model=List[RFIDCredentialSync]) 
+def list_active_credentials_for_sync(db: Session = Depends(get_db)):
+    """
+    Endpoint de sincronização para o firmware.
+    Retorna todas as credenciais RFID ATIVAS, juntamente com os dados do usuário.
+    Estes dados são usados para o cache offline de permissões.
+    """
+    credentials = db.query(RFIDCredential).filter(
+        RFIDCredential.is_active == True,
+        RFIDCredential.user.has_time_restriction != None # Filtro extra para garantir a integridade do dado
+    ).all()
+    
+    return credentials

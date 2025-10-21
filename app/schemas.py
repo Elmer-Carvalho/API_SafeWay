@@ -109,3 +109,21 @@ class HttpLog(HttpLogBase):
 class RFIDAccessRequest(BaseModel):
     card_id: str
     location: str
+
+# NOVO SCHEMA PARA SINCRONIZAÇÃO
+class UserSync(BaseModel):
+    full_name: str
+    has_time_restriction: bool
+    time_window_start: str
+    time_window_end: str
+
+    class Config:
+        from_attributes = True
+        
+class RFIDCredentialSync(BaseModel):
+    card_id: str
+    is_active: bool
+    user: UserSync # Inclui as restrições do usuário
+
+    class Config:
+        from_attributes = True
