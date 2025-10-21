@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from app.database import get_db
 from app.models import RFIDCredential, User, AccessLog, EventType
@@ -39,7 +39,30 @@ def list_all_rfid_credentials(db: Session = Depends(get_db)):
     credentials = db.query(RFIDCredential).all()
     return credentials
 
-@router.get("/credentials/{credential_id}", response_model=RFIDCredentialSchema)
+@router.get("/credentials/sync", response_model=List[RFIDCredentialSync]) 
+def list_active_credentials_for_sync(db: Session = Depends(get_db)):
+    """
+    Endpoint de sincronização para o firmware.
+    Retorna todas as credenciais RFID ATIVAS, juntamente com os dados do usuário.
+    """
+
+    credentials = db.query(RFIDCredential).options(
+        joinedload(RFIDCredential.user) # Garante que os dados do usuário sejam carregados na mesma consulta
+    ).filter(
+        RFIDCredential.is_active == True,
+        # Se você usar .join(User) no filter, o joinedload não é estritamente necessário para o filtro,
+        # mas é crucial para o Pydantic carregar o 'user' e construir o RFIDCredentialSync.
+        # Vamos usar o JOIN para o filtro e o joinedload para o carregamento:
+        User.is_active == True # Filtra apenas credenciais com usuário ativo
+    ).join(User).all()
+
+    # O filtro original RFIDCredential.user.has_time_restriction != None
+    # foi removido porque não é necessário, pois todos os usuários têm esse campo definido.
+    # O filtro mais importante é User.is_active == True.
+
+    return credentials
+
+@router.get("/credentials/{credential_id}", response_model=RFIDCredentialSchema) # Este deve vir DEPOIS
 def get_rfid_credential(credential_id: str, db: Session = Depends(get_db)):
     """Obter credencial RFID por ID"""
     credential = db.query(RFIDCredential).filter(RFIDCredential.id == credential_id).first()
@@ -148,17 +171,3 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
         "time_window_start": credential.user.time_window_start,
         "time_window_end": credential.user.time_window_end
     }
-
-@router.get("/credentials/sync", response_model=List[RFIDCredentialSync]) 
-def list_active_credentials_for_sync(db: Session = Depends(get_db)):
-    """
-    Endpoint de sincronização para o firmware.
-    Retorna todas as credenciais RFID ATIVAS, juntamente com os dados do usuário.
-    Estes dados são usados para o cache offline de permissões.
-    """
-    credentials = db.query(RFIDCredential).filter(
-        RFIDCredential.is_active == True,
-        RFIDCredential.user.has_time_restriction != None # Filtro extra para garantir a integridade do dado
-    ).all()
-    
-    return credentials
