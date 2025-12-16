@@ -39,6 +39,48 @@ def list_all_rfid_credentials(db: Session = Depends(get_db)):
     credentials = db.query(RFIDCredential).all()
     return credentials
 
+@router.get("/credentials/sync")
+def sync_rfid_credentials(
+    page: int = 1, 
+    page_size: int = 40,
+    db: Session = Depends(get_db)
+):
+    """Sincronizar credenciais RFID para dispositivos embarcados - com paginação"""
+    
+    # Calcular offset
+    skip = (page - 1) * page_size
+    
+    # Buscar apenas credenciais ativas com usuários ativos
+    credentials = db.query(RFIDCredential).join(User).filter(
+        RFIDCredential.is_active == True,
+        User.is_active == True
+    ).offset(skip).limit(page_size).all()
+    
+    # Contar total de registros
+    total = db.query(RFIDCredential).join(User).filter(
+        RFIDCredential.is_active == True,
+        User.is_active == True
+    ).count()
+    
+    # Montar response
+    sync_data = []
+    for credential in credentials:
+        sync_data.append({
+            "card_id": credential.card_id,
+            "user_name": credential.user.full_name,
+            "has_time_restriction": False,
+            "time_window_start": "00:00",
+            "time_window_end": "23:59"
+        })
+    
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": (total + page_size - 1) // page_size,
+        "data": sync_data
+    }
+
 @router.get("/credentials/{credential_id}", response_model=RFIDCredentialSchema)
 def get_rfid_credential(credential_id: str, db: Session = Depends(get_db)):
     """Obter credencial RFID por ID"""
