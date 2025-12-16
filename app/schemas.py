@@ -30,6 +30,9 @@ class User(UserBase):
 class RFIDCredentialBase(BaseModel):
     card_id: str
     is_active: bool = True
+    has_time_restriction: bool = False
+    time_window_start: Optional[str] = None
+    time_window_end: Optional[str] = None
 
 class RFIDCredentialCreate(RFIDCredentialBase):
     user_id: uuid.UUID
@@ -37,6 +40,9 @@ class RFIDCredentialCreate(RFIDCredentialBase):
 class RFIDCredentialUpdate(BaseModel):
     card_id: Optional[str] = None
     is_active: Optional[bool] = None
+    has_time_restriction: Optional[bool] = None
+    time_window_start: Optional[str] = None
+    time_window_end: Optional[str] = None
 
 class RFIDCredential(RFIDCredentialBase):
     id: uuid.UUID

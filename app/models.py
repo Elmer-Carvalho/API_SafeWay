@@ -37,6 +37,12 @@ class RFIDCredential(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     card_id = Column(String(255), unique=True, nullable=False)
     is_active = Column(Boolean, default=True)
+    
+    # Campos de restrição de horário
+    has_time_restriction = Column(Boolean, default=False)
+    time_window_start = Column(String(5), nullable=True)  # Formato "HH:MM"
+    time_window_end = Column(String(5), nullable=True)    # Formato "HH:MM"
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
