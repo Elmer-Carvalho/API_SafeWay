@@ -48,8 +48,8 @@ class AccessLog(Base):
     __tablename__ = "access_logs"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    rfid_credential_id = Column(UUID(as_uuid=True), ForeignKey("rfid_credentials.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  
+    rfid_credential_id = Column(UUID(as_uuid=True), ForeignKey("rfid_credentials.id"), nullable=True)  
     event_type = Column(Enum(EventType), nullable=False)
     location = Column(String(255), nullable=False)
     description = Column(Text)
@@ -58,6 +58,7 @@ class AccessLog(Base):
     # Relacionamentos
     user = relationship("User")
     rfid_credential = relationship("RFIDCredential", back_populates="access_logs")
+
 
 class ErrorLog(Base):
     __tablename__ = "error_logs"
