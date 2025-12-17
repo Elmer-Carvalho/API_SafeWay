@@ -130,6 +130,9 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
         
         return {
             "access_granted": False,
+            "user_name": None,
+            "user_id": None,
+            "user_email": None,
             "message": "Credencial não encontrada",
             "has_time_restriction": False,
             "time_window_start": None,
@@ -152,6 +155,8 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
         return {
             "access_granted": False,
             "user_name": credential.user.full_name,
+            "user_id": str(credential.user_id),
+            "user_email": credential.user.email,
             "message": "Usuário inativo",
             "has_time_restriction": credential.has_time_restriction,
             "time_window_start": credential.time_window_start,
@@ -197,6 +202,8 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
             return {
                 "access_granted": False,
                 "user_name": credential.user.full_name,
+                "user_id": str(credential.user_id),
+                "user_email": credential.user.email,
                 "message": "Fora do horário permitido",
                 "has_time_restriction": True,
                 "time_window_start": credential.time_window_start,
@@ -217,8 +224,10 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
     return {
         "access_granted": True,
         "user_name": credential.user.full_name,
+        "user_id": str(credential.user_id),
+        "user_email": credential.user.email,
         "message": "Acesso liberado",
         "has_time_restriction": credential.has_time_restriction,
-        "time_window_start": credential.time_window_start,
-        "time_window_end": credential.time_window_end
+        "time_window_start": credential.time_window_start if credential.has_time_restriction else "00:00",
+        "time_window_end": credential.time_window_end if credential.has_time_restriction else "23:59"
     }
