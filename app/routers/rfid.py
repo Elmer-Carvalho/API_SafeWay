@@ -5,6 +5,8 @@ from app.database import get_db
 from app.models import RFIDCredential, User, AccessLog, EventType
 from app.schemas import RFIDCredentialCreate, RFIDCredentialUpdate, RFIDCredential as RFIDCredentialSchema, RFIDAccessRequest, AccessLog as AccessLogSchema
 import uuid
+from datetime import datetime
+import pytz
 
 router = APIRouter()
 
@@ -39,6 +41,48 @@ def list_all_rfid_credentials(db: Session = Depends(get_db)):
     credentials = db.query(RFIDCredential).all()
     return credentials
 
+@router.get("/credentials/sync")
+def sync_rfid_credentials(
+    page: int = 1, 
+    page_size: int = 40,
+    db: Session = Depends(get_db)
+):
+    """Sincronizar credenciais RFID para dispositivos embarcados - com paginação"""
+    
+    # Calcular offset
+    skip = (page - 1) * page_size
+    
+    # Buscar apenas credenciais ativas com usuários ativos
+    credentials = db.query(RFIDCredential).join(User).filter(
+        RFIDCredential.is_active == True,
+        User.is_active == True
+    ).offset(skip).limit(page_size).all()
+    
+    # Contar total de registros
+    total = db.query(RFIDCredential).join(User).filter(
+        RFIDCredential.is_active == True,
+        User.is_active == True
+    ).count()
+    
+    # Montar response
+    sync_data = []
+    for credential in credentials:
+        sync_data.append({
+            "card_id": credential.card_id,
+            "user_name": credential.user.full_name,
+            "has_time_restriction": False,
+            "time_window_start": "00:00",
+            "time_window_end": "23:59"
+        })
+    
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": (total + page_size - 1) // page_size,
+        "data": sync_data
+    }
+
 @router.get("/credentials/{credential_id}", response_model=RFIDCredentialSchema)
 def get_rfid_credential(credential_id: str, db: Session = Depends(get_db)):
     """Obter credencial RFID por ID"""
@@ -65,6 +109,7 @@ def update_rfid_credential(credential_id: str, credential_update: RFIDCredential
 @router.post("/validate-access")
 def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depends(get_db)):
     """Validar acesso RFID - endpoint para o sistema local"""
+    
     # Buscar credencial RFID
     credential = db.query(RFIDCredential).filter(
         RFIDCredential.card_id == access_request.card_id,
@@ -85,7 +130,13 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
         
         return {
             "access_granted": False,
-            "message": "Credencial não encontrada"
+            "user_name": None,
+            "user_id": None,
+            "user_email": None,
+            "message": "Credencial não encontrada",
+            "has_time_restriction": False,
+            "time_window_start": None,
+            "time_window_end": None
         }
     
     # Verificar se usuário está ativo
@@ -103,8 +154,61 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
         
         return {
             "access_granted": False,
-            "message": "Usuário inativo"
+            "user_name": credential.user.full_name,
+            "user_id": str(credential.user_id),
+            "user_email": credential.user.email,
+            "message": "Usuário inativo",
+            "has_time_restriction": credential.has_time_restriction,
+            "time_window_start": credential.time_window_start,
+            "time_window_end": credential.time_window_end
         }
+    
+    # Verificar restrição de horário
+    if credential.has_time_restriction:
+        # Obter horário atual em UTC-3 (Brasil)
+        tz_brazil = pytz.timezone('America/Sao_Paulo')
+        current_time = datetime.now(tz_brazil)
+        current_hour_minute = current_time.strftime("%H:%M")
+        
+        # Converter strings de horário para minutos desde meia-noite para comparação
+        def time_to_minutes(time_str):
+            hours, minutes = map(int, time_str.split(':'))
+            return hours * 60 + minutes
+        
+        current_minutes = time_to_minutes(current_hour_minute)
+        start_minutes = time_to_minutes(credential.time_window_start)
+        end_minutes = time_to_minutes(credential.time_window_end)
+        
+        # Verificar se a janela cruza meia-noite (ex: 22:00-06:00)
+        if start_minutes > end_minutes:
+            # Janela cruza meia-noite
+            access_allowed = current_minutes >= start_minutes or current_minutes <= end_minutes
+        else:
+            # Janela normal
+            access_allowed = start_minutes <= current_minutes <= end_minutes
+        
+        if not access_allowed:
+            # Log de acesso negado - fora do horário
+            access_log = AccessLog(
+                user_id=credential.user_id,
+                rfid_credential_id=credential.id,
+                event_type=EventType.ACCESS_DENIED,
+                location=access_request.location,
+                description=f"Fora do horário permitido ({credential.time_window_start}-{credential.time_window_end})"
+            )
+            db.add(access_log)
+            db.commit()
+            
+            return {
+                "access_granted": False,
+                "user_name": credential.user.full_name,
+                "user_id": str(credential.user_id),
+                "user_email": credential.user.email,
+                "message": "Fora do horário permitido",
+                "has_time_restriction": True,
+                "time_window_start": credential.time_window_start,
+                "time_window_end": credential.time_window_end
+            }
     
     # Acesso concedido
     access_log = AccessLog(
@@ -119,10 +223,11 @@ def validate_rfid_access(access_request: RFIDAccessRequest, db: Session = Depend
     
     return {
         "access_granted": True,
-        "user": {
-            "id": str(credential.user.id),
-            "name": credential.user.full_name,
-            "email": credential.user.email
-        },
-        "message": "Acesso concedido"
+        "user_name": credential.user.full_name,
+        "user_id": str(credential.user_id),
+        "user_email": credential.user.email,
+        "message": "Acesso liberado",
+        "has_time_restriction": credential.has_time_restriction,
+        "time_window_start": credential.time_window_start if credential.has_time_restriction else "00:00",
+        "time_window_end": credential.time_window_end if credential.has_time_restriction else "23:59"
     }

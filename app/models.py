@@ -37,6 +37,12 @@ class RFIDCredential(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     card_id = Column(String(255), unique=True, nullable=False)
     is_active = Column(Boolean, default=True)
+    
+    # Campos de restrição de horário
+    has_time_restriction = Column(Boolean, default=False)
+    time_window_start = Column(String(5), nullable=True)  # Formato "HH:MM"
+    time_window_end = Column(String(5), nullable=True)    # Formato "HH:MM"
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -48,8 +54,8 @@ class AccessLog(Base):
     __tablename__ = "access_logs"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    rfid_credential_id = Column(UUID(as_uuid=True), ForeignKey("rfid_credentials.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  
+    rfid_credential_id = Column(UUID(as_uuid=True), ForeignKey("rfid_credentials.id"), nullable=True)  
     event_type = Column(Enum(EventType), nullable=False)
     location = Column(String(255), nullable=False)
     description = Column(Text)
@@ -58,6 +64,7 @@ class AccessLog(Base):
     # Relacionamentos
     user = relationship("User")
     rfid_credential = relationship("RFIDCredential", back_populates="access_logs")
+
 
 class ErrorLog(Base):
     __tablename__ = "error_logs"
